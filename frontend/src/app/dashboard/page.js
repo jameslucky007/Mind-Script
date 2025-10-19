@@ -5,6 +5,9 @@ import axios from "axios";
 import MarkdownRenderer from "../components/MarkdownRenderer";
 import { useAuth } from "@/firebase/useAuth";
 
+// Add API base URL - use environment variable
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "https://ai-chatbot-y7q6.onrender.com";
+
 export default function DashboardPage() {
   const user = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -57,11 +60,12 @@ export default function DashboardPage() {
   const extractTextHandler = async () => {
     setImgLoading(true);
     try {
+      const formData = new FormData();
+      formData.append("image", imageFile);
+
       const res = await axios.post(
-        "http://localhost:14000/extract-image",
-        {
-          image: imageFile,
-        },
+        `${API_BASE_URL}/extract-image`,
+        formData,
         {
           headers: {
             "Content-Type": "multipart/form-data",
@@ -75,7 +79,11 @@ export default function DashboardPage() {
         handleSend(msg);
       }
     } catch (error) {
-      console.log(error);
+      console.error("Image extraction error:", error);
+      setMessages((p) => [
+        ...p,
+        { role: "assistant", content: "⚠️ Error extracting text from image." },
+      ]);
     } finally {
       setImgLoading(false);
     }
@@ -126,6 +134,15 @@ export default function DashboardPage() {
     const text = input.trim() || query;
     if (!text || isLoading) return;
 
+    // Check if user is logged in
+    if (!user?.email) {
+      setMessages((p) => [
+        ...p,
+        { role: "assistant", content: "⚠️ Please log in to use the chatbot." },
+      ]);
+      return;
+    }
+
     setMessages((p) => [...p, { role: "user", content: text }]);
     setInput("");
     setIsLoading(true);
@@ -139,12 +156,20 @@ export default function DashboardPage() {
     });
 
     try {
-      const res = await fetch("https://ai-chatbot-y7q6.onrender.com", {
+      // Fixed: Use correct endpoint /chat-stream
+      const res = await fetch(`${API_BASE_URL}/chat-stream`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, userEmail: user?.email }),
       });
-      if (!res.ok || !res.body) throw new Error(`HTTP ${res.status}`);
+
+      if (!res.ok) {
+        throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+      }
+
+      if (!res.body) {
+        throw new Error("Response body is null");
+      }
 
       const reader = res.body.getReader();
       const decoder = new TextDecoder();
@@ -165,11 +190,17 @@ export default function DashboardPage() {
         });
       }
     } catch (e) {
-      console.error(e);
-      setMessages((p) => [
-        ...p,
-        { role: "assistant", content: "⚠️ Error connecting to server." },
-      ]);
+      console.error("Chat error:", e);
+      setMessages((prev) => {
+        const copy = [...prev];
+        if (assistantIndex >= 0) {
+          copy[assistantIndex] = {
+            role: "assistant",
+            content: `⚠️ Error: ${e.message || "Failed to connect to server. Please try again."}`,
+          };
+        }
+        return copy;
+      });
     } finally {
       setIsLoading(false);
     }
@@ -326,7 +357,7 @@ export default function DashboardPage() {
                         accept="image/*"
                         className="hidden"
                         onChange={(e) => {
-                          const file = e.target.files[0];
+                          const file = e.target.files?.[0];
                           if (file) {
                             setImageFile(file);
                             setIsMenuOpen(false);
