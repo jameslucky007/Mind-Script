@@ -139,7 +139,7 @@ export default function DashboardPage() {
     });
 
     try {
-      const res = await fetch("http://localhost:14000/chat-stream", {
+      const res = await fetch("https://ai-chatbot-y7q6.onrender.com", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: text, userEmail: user?.email }),
