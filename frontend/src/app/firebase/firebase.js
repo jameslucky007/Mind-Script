@@ -3,14 +3,14 @@ import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBiC4UA_Id5a0BIQelW98gXue09ogRB8IQ",
-  authDomain: "veritas-ai-801b4.firebaseapp.com",
-  projectId: "veritas-ai-801b4",
-  storageBucket: "veritas-ai-801b4.appspot.com",
-  messagingSenderId: "385176087644",
-  appId: "1:385176087644:web:ee33bcf2ad97b4dfcd8a99",
+  apiKey: "AIzaSyBFZBCOtIwNhI668MLU1DTN2UaIOiwoyIs",
+  authDomain: "mind-script-3a6d6.firebaseapp.com",
+  projectId: "mind-script-3a6d6",
+  storageBucket: "mind-script-3a6d6.firebasestorage.app",
+  messagingSenderId: "435025388457",
+  appId: "1:435025388457:web:254f6c7498165a630bdab8",
+  measurementId: "G-7L8ZGNZCHS"
 };
-
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
